@@ -306,7 +306,7 @@ namespace celiang
             //the last
             if (k <= sqxb[length - 1, 0])
             {
-                return Math.Round(sqxb[length - 1, 0] + (k - sqxb[length - 1, 0]) * hp, 3);
+                return Math.Round(sqxb[length - 1, 1] + (k - sqxb[length - 1, 0]) * hp, 3);
             }
             return -1;
         }
