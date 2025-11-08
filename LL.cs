@@ -186,18 +186,18 @@ namespace celiang
         /// <param name="b">宽度参数</param>
         /// <param name="z">角度参数</param>
         /// <returns>包含目标X坐标、Y坐标和方位角的数组</returns>
-        public static double[] Dantiaoxianludange(double[][] pqx, double k, double b, double z)
+        public static double[] Dantiaoxianludange(double[,] pqx, double k, double b, double z)
         {
-            for (int i = 0; i < pqx.Length; i++)
+            for (int i = 0; i < pqx.GetLength(0); i++)
             {
-                double dtk = pqx[i][0];
-                double dtx = pqx[i][1];
-                double dty = pqx[i][2];
-                double dtfwj = pqx[i][3];
-                double dtcd = pqx[i][4];
-                double dtr1 = pqx[i][5];
-                double dtr2 = pqx[i][6];
-                double dtzy = pqx[i][7];
+                double dtk = pqx[i, 0];
+                double dtx = pqx[i, 1];
+                double dty = pqx[i, 2];
+                double dtfwj = pqx[i, 3];
+                double dtcd = pqx[i, 4];
+                double dtr1 = pqx[i, 5];
+                double dtr2 = pqx[i, 6];
+                double dtzy = pqx[i, 7];
                 if (k >= dtk && k <= dtk + dtcd)
                 {
                     double hudu = DmsToRadians(dtfwj);
@@ -205,7 +205,6 @@ namespace celiang
                     return [Math.Round(jsxy1[0], 3), Math.Round(jsxy1[1], 3), jsxy1[2]];
                 }
             }
-            // 如果没有找到对应的里程段，返回起点的坐标和方位角
             return [0, 0, 0];
         }
         #endregion
@@ -219,16 +218,16 @@ namespace celiang
         /// <param name="fsx"></param>
         /// <param name="fsy"></param>
         /// <returns></returns>
-        public static double[] Fs(double[][] pqx, double fsx, double fsy)
+        public static double[] Fs(double[,] pqx, double fsx, double fsy)
         {
-            dynamic jljd = Fwj(pqx[0][1], pqx[0][2], fsx, fsy);
-            double k = pqx[0][0];
-            double hudu = DmsToRadians(pqx[0][3]);
+            dynamic jljd = Fwj(pqx[0, 1], pqx[0, 2], fsx, fsy);
+            double k = pqx[0, 0];
+            double hudu = DmsToRadians(pqx[0, 3]);
             double cz = jljd[0] * Math.Cos(jljd[1] - hudu);
             double pj = jljd[0] * Math.Sin(jljd[1] - hudu);
-            int hang = pqx.Length - 1;
-            double qdlc = pqx[0][0];
-            double zdlc = pqx[hang][0] + pqx[hang][4];
+            int hang = pqx.GetLength(0) - 1;
+            double qdlc = pqx[0, 0];
+            double zdlc = pqx[hang, 0] + pqx[hang, 4];
             int jisuancishu = 0;
             while (Math.Abs(cz) > 0.01)
             {
@@ -288,25 +287,26 @@ namespace celiang
         /// <param name="k"></param>
         /// <param name="sqxb"></param>
         /// <returns></returns>
-        public static double H(double k, double[][] sqxb)
+        public static double H(double k, double[,] sqxb)
         {
             double hp = 0;
-            for (int i = 1; i < sqxb.Length - 1; i++)
+            int length = sqxb.GetLength(0);
+            for (int i = 1; i < length - 1; i++)
             {
-                double r = sqxb[i][2];
+                double r = sqxb[i, 2];
                 if (r < 0.001)
                     r = 0.001;
-                double qp = (sqxb[i][1] - sqxb[i - 1][1]) / (sqxb[i][0] - sqxb[i - 1][0]);
-                hp = (sqxb[i + 1][1] - sqxb[i][1]) / (sqxb[i + 1][0] - sqxb[i][0]);
+                double qp = (sqxb[i, 1] - sqxb[i - 1, 1]) / (sqxb[i, 0] - sqxb[i - 1, 0]);
+                hp = (sqxb[i + 1, 1] - sqxb[i, 1]) / (sqxb[i + 1, 0] - sqxb[i, 0]);
                 double f = qp - hp;
                 double t = r * Math.Abs(f) / 2;
-                if (k <= sqxb[i][0] + t)
-                    return Math.Round(Gaocheng(sqxb[i][0], sqxb[i][1], r, qp, hp, t, k), 3);
+                if (k <= sqxb[i, 0] + t)
+                    return Math.Round(Gaocheng(sqxb[i, 0], sqxb[i, 1], r, qp, hp, t, k), 3);
             }
             //the last
-            if (k <= sqxb[sqxb.Length - 1][0])
+            if (k <= sqxb[length - 1, 0])
             {
-                return Math.Round(sqxb[sqxb.Length - 1][1] + (k - sqxb[sqxb.Length - 1][0]) * hp, 3);
+                return Math.Round(sqxb[length - 1, 0] + (k - sqxb[length - 1, 0]) * hp, 3);
             }
             return -1;
         }
