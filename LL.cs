@@ -1,7 +1,18 @@
-﻿namespace celiang
+﻿using LL.parsJSON;
+
+namespace celiang
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class LL
     {
+        public static PQX_model? pqx { get; set; }
+
+         static LL()
+        {
+            pqx= ParsPQX.ParseJson(@"D:\73\function\hdm\bin\Release\net8.0-windows\publish\2d\lnglat\广州.pqx");
+        }
         //1
         #region   数字转桩号格式 
         /// <summary>
@@ -10,7 +21,7 @@
         /// <param name="meters">输入的数字</param>
         /// <returns>格式化后的字符串</returns>
         /// <example>LL.Num2K(12345)</example>
-        public static string Num2K(double meters)
+        public  string Num2K(double meters)
         {
             int km = (int)Math.Floor(meters / 1000);
             double m = meters - km * 1000;
@@ -63,7 +74,6 @@
         {
             double x = x1 - x0;
             double y = y1 - y0;
-
             double cd = Math.Sqrt(x * x + y * y); // 距离
             double hd = Math.Atan2(y, x);         // 角度（弧度）
 
@@ -71,7 +81,6 @@
             {
                 hd += 2 * Math.PI; // 确保角度在 [0, 2π) 范围内
             }
-
             return [cd, hd];
         }
         #endregion
@@ -196,7 +205,6 @@
                     return [Math.Round(jsxy1[0], 3), Math.Round(jsxy1[1], 3), jsxy1[2]];
                 }
             }
-
             // 如果没有找到对应的里程段，返回起点的坐标和方位角
             return [0, 0, 0];
         }
@@ -204,6 +212,13 @@
 
         //6
         #region xy=>k
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="pqx"></param>
+        /// <param name="fsx"></param>
+        /// <param name="fsy"></param>
+        /// <returns></returns>
         public static double[] Fs(double[][] pqx, double fsx, double fsy)
         {
             dynamic jljd = Fwj(pqx[0][1], pqx[0][2], fsx, fsy);
@@ -215,7 +230,6 @@
             double qdlc = pqx[0][0];
             double zdlc = pqx[hang][0] + pqx[hang][4];
             int jisuancishu = 0;
-
             while (Math.Abs(cz) > 0.01)
             {
                 k += cz;
@@ -225,32 +239,25 @@
                 {
                     return [-1, -1];
                 }
-
                 if (k > zdlc)
                 {
-                    return [-1, -1];
+                    return [-2, -2];
                 }
-
                 if (jisuancishu > 15)
                 {
-                    return [-1, -1];
+                    return [-3, -3];
                 }
-
-                dynamic xy = Dantiaoxianludange(pqx, k, 0, 0);
+                double[] xy = Dantiaoxianludange(pqx, k, 0, 0);
                 jljd = Fwj((double)xy[0], (double)xy[1], fsx, fsy);
                 cz = jljd[0] * Math.Cos(jljd[1] - xy[2]);
                 pj = jljd[0] * Math.Sin(jljd[1] - xy[2]);
             }
-
-            //fsjieguo.k = k;
-            //fsjieguo.b = pj;
-            //fsjieguo.cs = jisuancishu;
             return [Math.Round(k, 3), Math.Round(pj, 3)];
         }
         #endregion
 
         #region 
-        internal static double Gaocheng(double bpdlc, double bpdgc, double r, double qp, double hp, double t, double k)
+        private static double Gaocheng(double bpdlc, double bpdgc, double r, double qp, double hp, double t, double k)
         {
             double f = qp - hp;
             r = r * Math.Abs(f) / f;
@@ -275,6 +282,12 @@
 
         //7高程计算
         #region h
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="k"></param>
+        /// <param name="sqxb"></param>
+        /// <returns></returns>
         public static double H(double k, double[][] sqxb)
         {
             double hp = 0;
@@ -316,7 +329,6 @@
             double a = 6378137.0;
             B = B * pi / 180;
             L = L * pi / 180;
-
             double L_num;
             double L_center;
             if (lonCenter == 360)
@@ -328,43 +340,33 @@
             {
                 L_center = (double)lonCenter;
             }
-
             double l = (L / pi * 180 - L_center) * 3600;
-
             double M0 = a * (1 - e);
             double M2 = 3.0 / 2.0 * e * M0;
             double M4 = 5.0 / 4.0 * e * M2;
             double M6 = 7.0 / 6.0 * e * M4;
             double M8 = 9.0 / 8.0 * e * M6;
-
             double a0 = M0 + M2 / 2.0 + 3.0 / 8.0 * M4 + 5.0 / 16.0 * M6 + 35.0 / 128.0 * M8;
             double a2 = M2 / 2.0 + M4 / 2 + 15.0 / 32.0 * M6 + 7.0 / 16.0 * M8;
             double a4 = M4 / 8.0 + 3.0 / 16.0 * M6 + 7.0 / 32.0 * M8;
             double a6 = M6 / 32.0 + M8 / 16.0;
             double a8 = M8 / 128.0;
-
             double Xz = a0 * B - a2 / 2.0 * Math.Sin(2 * B) + a4 / 4.0 * Math.Sin(4 * B) - a6 / 6.0 * Math.Sin(6 * B) + a8 / 8.0 * Math.Sin(8 * B);
-
             double c = a * a / b;
             double V = Math.Sqrt(1 + e1 * Math.Cos(B) * Math.Cos(B));
             double N = c / V;
             double t = Math.Tan(B);
             double n = e1 * Math.Cos(B) * Math.Cos(B);
-
             double m1 = N * Math.Cos(B);
             double m2 = N / 2.0 * Math.Sin(B) * Math.Cos(B);
             double m3 = N / 6.0 * Math.Pow(Math.Cos(B), 3) * (1 - t * t + n);
             double m4 = N / 24.0 * Math.Sin(B) * Math.Pow(Math.Cos(B), 3) * (5 - t * t + 9 * n);
             double m5 = N / 120.0 * Math.Pow(Math.Cos(B), 5) * (5 - 18 * t * t + Math.Pow(t, 4) + 14 * n - 58 * n * t * t);
             double m6 = N / 720.0 * Math.Sin(B) * Math.Pow(Math.Cos(B), 5) * (61 - 58 * t * t + Math.Pow(t, 4));
-
-            double x0 = Xz + m2 * l * l / Math.Pow(p0, 2) + m4 * Math.Pow(l, 4) / Math.Pow(p0, 4) + m6 * Math.Pow(l, 6) / Math.Pow(p0, 6);
+            double x = Xz + m2 * l * l / Math.Pow(p0, 2) + m4 * Math.Pow(l, 4) / Math.Pow(p0, 4) + m6 * Math.Pow(l, 6) / Math.Pow(p0, 6);
             double y0 = m1 * l / p0 + m3 * Math.Pow(l, 3) / Math.Pow(p0, 3) + m5 * Math.Pow(l, 5) / Math.Pow(p0, 5);
-
-            double x = x0;
             double y = y0 + 500000;
-
-            return new double[] { x, y, L_center };
+            return [x, y, L_center ];
         }
         //高斯 反投影
         /// <summary>
@@ -381,159 +383,130 @@
             double e1 = 0.00673949677548;
             double b = 6356752.3141;
             double a = 6378137.0;
-
             double y1 = y - 500000;
-
             double M0 = a * (1 - e);
             double M2 = 3.0 / 2.0 * e * M0;
             double M4 = 5.0 / 4.0 * e * M2;
             double M6 = 7.0 / 6.0 * e * M4;
             double M8 = 9.0 / 8.0 * e * M6;
-
             double a0 = M0 + M2 / 2.0 + 3.0 / 8.0 * M4 + 5.0 / 16.0 * M6 + 35.0 / 128.0 * M8;
             double a2 = M2 / 2.0 + M4 / 2 + 15.0 / 32.0 * M6 + 7.0 / 16.0 * M8;
             double a4 = M4 / 8.0 + 3.0 / 16.0 * M6 + 7.0 / 32.0 * M8;
             double a6 = M6 / 32.0 + M8 / 16.0;
-
             double Bf = x / a0;
             double B0 = Bf;
-
             while (Math.Abs(Bf - B0) > 0.0000001 || B0 == Bf)
             {
                 B0 = Bf;
                 double FBf = -a2 / 2.0 * Math.Sin(2 * B0) + a4 / 4.0 * Math.Sin(4 * B0) - a6 / 6.0 * Math.Sin(6 * B0);
                 Bf = (x - FBf) / a0;
             }
-
             double t = Math.Tan(Bf);
             double c = a * a / b;
             double V = Math.Sqrt(1 + e1 * Math.Cos(Bf) * Math.Cos(Bf));
             double N = c / V;
             double M = c / Math.Pow(V, 3);
             double n = e1 * Math.Cos(Bf) * Math.Cos(Bf);
-
             double n1 = 1 / (N * Math.Cos(Bf));
             double n2 = -t / (2.0 * M * N);
             double n3 = -(1 + 2 * t * t + n) / (6.0 * Math.Pow(N, 3) * Math.Cos(Bf));
             double n4 = t * (5 + 3 * t * t + n - 9 * n * t * t) / (24.0 * M * Math.Pow(N, 3));
             double n5 = (5 + 28 * t * t + 24 * Math.Pow(t, 4) + 6 * n + 8 * n * t * t) / (120.0 * Math.Pow(N, 5) * Math.Cos(Bf));
             double n6 = -t * (61 + 90 * t * t + 45 * Math.Pow(t, 4)) / (720.0 * M * Math.Pow(N, 5));
-
             double B = (Bf + n2 * y1 * y1 + n4 * Math.Pow(y1, 4) + n6 * Math.Pow(y1, 6)) / pi * 180;
             double L0 = l0;
             double l = n1 * y1 + n3 * Math.Pow(y1, 3) + n5 * Math.Pow(y1, 5);
             double L = L0 + l / pi * 180;
-
-            return new double[] { L, B };
+            return [ L, B ];
         }
 
         // 经纬度转UTM坐标
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="longitude"></param>
+        /// <param name="latitude"></param>
+        /// <returns></returns>
         public static double[] Utm_proj(double longitude, double latitude)
         {
-            // WGS84椭球参数
-            double EQUATORIAL_RADIUS = 6378137.0;        // 赤道半径 (m)
-            double FLATTENING = 1 / 298.257223563;       // 扁率
-            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2); // 第一偏心率平方
-            double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED); // 第二偏心率平方
-            double SCALE_FACTOR = 0.9996;                // UTM比例因子
-            double FALSE_EASTING = 500000.0;             // 假东移值
-            double FALSE_NORTHING_S = 10000000.0;        // 南半球假北移值
-                                                   // 1. 计算UTM带号[1](@ref)[8](@ref)
+            double EQUATORIAL_RADIUS = 6378137.0;       
+            double FLATTENING = 1 / 298.257223563;      
+            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2); 
+            double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED);
+            double SCALE_FACTOR = 0.9996;                
+            double FALSE_EASTING = 500000.0;            
+            double FALSE_NORTHING_S = 10000000.0;      
             int zoneNumber = (int)Math.Floor((longitude + 180) / 6) + 1;
-            double centralMeridian = (zoneNumber - 1) * 6 - 180 + 3; // 中央经线
-
-            // 2. 转换为弧度
+            double centralMeridian = (zoneNumber - 1) * 6 - 180 + 3; 
             double latRad = (latitude) * Math.PI / 180.0;
             double lonRad = (longitude) * Math.PI / 180.0;
             double lonCenterRad = (centralMeridian) * Math.PI / 180.0;
-
-            // 3. 计算基础参数
             double N = EQUATORIAL_RADIUS / Math.Sqrt(1 - ECC_SQUARED * Math.Pow(Math.Sin(latRad), 2));
             double T = Math.Pow(Math.Tan(latRad), 2);
             double C = ECC_PRIME_SQUARED * Math.Pow(Math.Cos(latRad), 2);
             double A = (lonRad - lonCenterRad) * Math.Cos(latRad);
-
-            // 4. 计算子午线弧长[8](@ref)
-            double M = EQUATORIAL_RADIUS * ((1 - ECC_SQUARED / 4 - 3 * Math.Pow(ECC_SQUARED, 2) / 64
-                - 5 * Math.Pow(ECC_SQUARED, 3) / 256) * latRad
-                - (3 * ECC_SQUARED / 8 + 3 * Math.Pow(ECC_SQUARED, 2) / 32
-                + 45 * Math.Pow(ECC_SQUARED, 3) / 1024) * Math.Sin(2 * latRad)
-                + (15 * Math.Pow(ECC_SQUARED, 2) / 256 + 45 * Math.Pow(ECC_SQUARED, 3) / 1024)
-                * Math.Sin(4 * latRad)
-                - (35 * Math.Pow(ECC_SQUARED, 3) / 3072) * Math.Sin(6 * latRad));
-
-            // 5. 计算UTM坐标[8](@ref)[10](@ref)
-            double easting = SCALE_FACTOR * N * (A + (1 - T + C) * Math.Pow(A, 3) / 6
-                + (5 - 18 * T + Math.Pow(T, 2) + 72 * C - 58 * ECC_PRIME_SQUARED)
-                * Math.Pow(A, 5) / 120) + FALSE_EASTING;
-
-            double northing = SCALE_FACTOR * (M + N * Math.Tan(latRad)
-                * (Math.Pow(A, 2) / 2 + (5 - T + 9 * C + 4 * Math.Pow(C, 2))
-                * Math.Pow(A, 4) / 24 + (61 - 58 * T + Math.Pow(T, 2)
-                + 600 * C - 330 * ECC_PRIME_SQUARED) * Math.Pow(A, 6) / 720));
-
-            // 南半球处理
+            double M = EQUATORIAL_RADIUS * ((1 - ECC_SQUARED / 4 - 3 * Math.Pow(ECC_SQUARED, 2) / 64- 5 * Math.Pow(ECC_SQUARED, 3) / 256) * latRad - (3 * ECC_SQUARED / 8 + 3 * Math.Pow(ECC_SQUARED, 2) / 32+ 45 * Math.Pow(ECC_SQUARED, 3) / 1024) * Math.Sin(2 * latRad) + (15 * Math.Pow(ECC_SQUARED, 2) / 256 + 45 * Math.Pow(ECC_SQUARED, 3) / 1024)* Math.Sin(4 * latRad)- (35 * Math.Pow(ECC_SQUARED, 3) / 3072) * Math.Sin(6 * latRad));
+            double easting = SCALE_FACTOR * N * (A + (1 - T + C) * Math.Pow(A, 3) / 6+ (5 - 18 * T + Math.Pow(T, 2) + 72 * C - 58 * ECC_PRIME_SQUARED)* Math.Pow(A, 5) / 120) + FALSE_EASTING;
+            double northing = SCALE_FACTOR * (M + N * Math.Tan(latRad)* (Math.Pow(A, 2) / 2 + (5 - T + 9 * C + 4 * Math.Pow(C, 2))* Math.Pow(A, 4) / 24 + (61 - 58 * T + Math.Pow(T, 2) + 600 * C - 330 * ECC_PRIME_SQUARED) * Math.Pow(A, 6) / 720));
             if (latitude < 0) northing += FALSE_NORTHING_S;
-
-            return new double[] { northing, easting, zoneNumber };
+            return [northing, easting, zoneNumber ];
         }
 
         // UTM坐标转经纬度
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="northing"></param>
+        /// <param name="easting"></param>
+        /// <param name="zoneNumber"></param>
+        /// <param name="isNorthern"></param>
+        /// <returns></returns>
         public static double[] Utm_unproj(double northing, double easting, int zoneNumber, bool isNorthern)
         {
-            // WGS84椭球参数
-            double EQUATORIAL_RADIUS = 6378137.0;        // 赤道半径 (m)
-            double FLATTENING = 1 / 298.257223563;       // 扁率
-            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2); // 第一偏心率平方
-            double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED); // 第二偏心率平方
-            double SCALE_FACTOR = 0.9996;                // UTM比例因子
-            double FALSE_EASTING = 500000.0;             // 假东移值
-            
-            double FALSE_NORTHING_S = 10000000.0;        // 南半球假北移值
-            // 1. 移除偏移量
+            double EQUATORIAL_RADIUS = 6378137.0;      
+            double FLATTENING = 1 / 298.257223563;      
+            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2); 
+            double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED); 
+            double SCALE_FACTOR = 0.9996;               
+            double FALSE_EASTING = 500000.0;                  
+            double FALSE_NORTHING_S = 10000000.0;        
             double x = easting - FALSE_EASTING;
             double y = isNorthern ? northing : northing - FALSE_NORTHING_S;
-
-            // 2. 计算中央经线
             double centralMeridian = (zoneNumber - 1) * 6 - 180 + 3;
             double lonCenterRad = (centralMeridian) * Math.PI / 180.0;
-
-            // 3. 计算初始参数
             double M = y / SCALE_FACTOR;
             double mu = M / (EQUATORIAL_RADIUS * (1 - ECC_SQUARED / 4 - 3 * Math.Pow(ECC_SQUARED, 2) / 64
                 - 5 * Math.Pow(ECC_SQUARED, 3) / 256));
-
-            // 4. 计算footprint纬度[8](@ref)
             double e1 = (1 - Math.Sqrt(1 - ECC_SQUARED)) / (1 + Math.Sqrt(1 - ECC_SQUARED));
             double phi1Rad = mu + (3 * e1 / 2 - 27 * Math.Pow(e1, 3) / 32) * Math.Sin(2 * mu)
                 + (21 * Math.Pow(e1, 2) / 16 - 55 * Math.Pow(e1, 4) / 32) * Math.Sin(4 * mu)
                 + (151 * Math.Pow(e1, 3) / 96) * Math.Sin(6 * mu);
-
-            // 5. 计算最终纬度经度
             double N1 = EQUATORIAL_RADIUS / Math.Sqrt(1 - ECC_SQUARED * Math.Pow(Math.Sin(phi1Rad), 2));
             double T1 = Math.Pow(Math.Tan(phi1Rad), 2);
             double C1 = ECC_PRIME_SQUARED * Math.Pow(Math.Cos(phi1Rad), 2);
             double R1 = EQUATORIAL_RADIUS * (1 - ECC_SQUARED) / Math.Pow(1 - ECC_SQUARED * Math.Pow(Math.Sin(phi1Rad), 2), 1.5);
             double D = x / (N1 * SCALE_FACTOR);
-
             double latRad = phi1Rad - (N1 * Math.Tan(phi1Rad) / R1)
                 * (Math.Pow(D, 2) / 2 - (5 + 3 * T1 + 10 * C1 - 4 * Math.Pow(C1, 2) - 9 * ECC_PRIME_SQUARED)
                 * Math.Pow(D, 4) / 24 + (61 + 90 * T1 + 298 * C1 + 45 * Math.Pow(T1, 2)
                 - 252 * ECC_PRIME_SQUARED - 3 * Math.Pow(C1, 2)) * Math.Pow(D, 6) / 720);
-
             double lonRad = lonCenterRad + (D - (1 + 2 * T1 + C1) * Math.Pow(D, 3) / 6
                 + (5 - 2 * C1 + 28 * T1 - 3 * Math.Pow(C1, 2) + 8 * ECC_PRIME_SQUARED + 24 * Math.Pow(T1, 2))
                 * Math.Pow(D, 5) / 120) / Math.Cos(phi1Rad);
-
-            return new double[] { (latRad) * 180 / Math.PI, (lonRad) * 180 / Math.PI };
+            return [(latRad) * 180 / Math.PI, (lonRad) * 180 / Math.PI ];
         }
     
-
-
         //四参数
         // 应用转换公式
         //double convertedX = params.scale* (x* Math.cos(params.rotation) - y* Math.sin(params.rotation)) + params.deltaX;
         //        double convertedY = params.scale* (x* Math.sin(params.rotation) + y* Math.cos(params.rotation)) + params.deltaY;
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="target"></param>
+        /// <returns></returns>
+        /// <exception cref="ArithmeticException"></exception>
         public static double[] Cs4(double[] source, double[] target)
         {
             if (source == null || target == null || source.Length != target.Length)
@@ -576,12 +549,10 @@
                 double y1 = centeredSource[2 * i + 1];
                 double x2 = centeredTarget[2 * i];
                 double y2 = centeredTarget[2 * i + 1];
-
                 H11 += x1 * x1 + y1 * y1;
-                H12 += 0;  // 对称矩阵保持结构
+                H12 += 0; 
                 H21 += 0;
                 H22 += x1 * x1 + y1 * y1;
-
                 B1 += x1 * x2 + y1 * y2;
                 B2 += x1 * y2 - y1 * x2;
             }
@@ -599,7 +570,5 @@
             Console.WriteLine($"四参数计算:\ndeltaX: {deltaX}\ndeltaY:{deltaY}\nrotation (radians): {rotation}\nscale: {scale}");
             return [deltaX, deltaY, rotation, scale];
         }
-        
-
     }
 }
