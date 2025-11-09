@@ -34,11 +34,28 @@ namespace LL
             celiang.LL.FourParameterTransform(1710.9090, 884.1963, cs[0], cs[1], cs[2], cs[3]);
 
 
-            for (int i = 0;i<target.Length;i+=2)
+            for (int i = 0; i < target.Length; i += 2)
             {
                 var res = celiang.LL.FourParameterTransform(source[i], source[i + 1], cs[0], cs[1], cs[2], cs[3]);
                 Console.WriteLine($"源点({source[i]:F3}, {source[i + 1]:F3}) => 目标点({res[0]:F3}, {res[1]:F3})， 期望目标点({target[i]:F3}, {target[i + 1]:F3})");
             }
+
+
+            double[,] jd =
+            {
+                { 4616065.974, 503168.492, 1693.807, 0, 0 },
+                { 4616673.582, 503857.947, 155.769, 155.769, 1300 },
+                { 4615456.635, 506542.448, 155.769, 155.769, 1300 },
+                { 4613793.743, 506918.332, 133.333, 133.333, 1200 },
+                { 4613726.966, 508318.607, 133.333, 133.333, 1200 },
+                { 4613224.34, 509018.67, 133.333, 133.333, 1200 }
+            };
+      
+
+            var jd1 = new JiaoDian();
+            var jd2pqx=jd1.JD2PQX(jd);
+            var dou= celiang.LL.radiansToDMS((108 + 3 / 60.0 + 3.6 / 3600.0) * Math.PI / 180);
+            Console.WriteLine(celiang.LL.DmsToRadians(dou));
             Console.ReadKey();
         }
     }

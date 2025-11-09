@@ -59,7 +59,30 @@ namespace celiang
             return totalDegrees * Math.PI / 180;
         }
         #endregion
+        internal static string radiansToDMS_str(double radians)
+        {
+            double degrees = radians * (180 / Math.PI);
+            int d = (int)Math.Floor(degrees);
+            double remaining = (degrees - d) * 60;
+            int m =(int) Math.Floor(remaining);
+            double s = (remaining - m) * 60;
 
+            return $"{d}°{m}′{s:F1}\"";
+        }
+
+        internal static double radiansToDMS(double radians)
+        {
+            double degrees = radians * (180 / Math.PI);
+            int d = (int)Math.Floor(degrees);
+            double remaining = (degrees - d) * 60;
+            int m = (int)Math.Floor(remaining);
+            double s = (remaining - m) * 60;
+            string mm=m<10? $"0{m}":m.ToString();
+            string ss =s<10? $"0{s:F1}": $"{s:F1}";
+            string dfm=$"{d}{mm}{ss}";
+
+            return Math.Round( double.Parse(dfm) / 10000.0,5);
+        }
         //3
         #region  距离和方位角
         /// <summary>
