@@ -9,9 +9,9 @@ namespace celiang
     {
         public static PQX_model? pqx { get; set; }
 
-         static LL()
+        static LL()
         {
-            pqx= ParsPQX.ParseJson(@"D:\73\function\hdm\bin\Release\net8.0-windows\publish\2d\lnglat\广州.pqx");
+           // pqx = ParsPQX.ParseJson(@"D:\73\function\hdm\bin\Release\net8.0-windows\publish\2d\lnglat\广州.pqx");
         }
         //1
         #region   数字转桩号格式 
@@ -21,7 +21,7 @@ namespace celiang
         /// <param name="meters">输入的数字</param>
         /// <returns>格式化后的字符串</returns>
         /// <example>LL.Num2K(12345)</example>
-        public  string Num2K(double meters)
+        public string Num2K(double meters)
         {
             int km = (int)Math.Floor(meters / 1000);
             double m = meters - km * 1000;
@@ -218,7 +218,7 @@ namespace celiang
         /// <param name="fsx"></param>
         /// <param name="fsy"></param>
         /// <returns></returns>
-        public static double[] Fs(double[,] pqx, double fsx, double fsy)
+        public static double[] Fs(double fsx, double fsy, double[,] pqx)
         {
             dynamic jljd = Fwj(pqx[0, 1], pqx[0, 2], fsx, fsy);
             double k = pqx[0, 0];
@@ -233,7 +233,6 @@ namespace celiang
             {
                 k += cz;
                 jisuancishu += 1;
-
                 if (k < qdlc)
                 {
                     return [-1, -1];
@@ -319,7 +318,7 @@ namespace celiang
         /// <param name="B">纬度</param>
         /// <param name="lonCenter">中心经度,为空的时候自动计算</param>
         /// <returns>[北坐标,东坐标,中心经度]</returns>
-        public static double[] Gaosi_proj(double L, double B, double lonCenter = 360)
+        public static double[] Gauss_proj(double L, double B, double lonCenter = 360)
         {
             double pi = 3.141592653589793238463;
             double p0 = 206264.8062470963551564;
@@ -366,7 +365,7 @@ namespace celiang
             double x = Xz + m2 * l * l / Math.Pow(p0, 2) + m4 * Math.Pow(l, 4) / Math.Pow(p0, 4) + m6 * Math.Pow(l, 6) / Math.Pow(p0, 6);
             double y0 = m1 * l / p0 + m3 * Math.Pow(l, 3) / Math.Pow(p0, 3) + m5 * Math.Pow(l, 5) / Math.Pow(p0, 5);
             double y = y0 + 500000;
-            return [x, y, L_center ];
+            return [x, y, L_center];
         }
         //高斯 反投影
         /// <summary>
@@ -376,7 +375,7 @@ namespace celiang
         /// <param name="y">东坐标</param>
         /// <param name="l0">中心经度</param>
         /// <returns>[经度,纬度]</returns>
-        public static double[] Gaosi_unproj(double x, double y, double l0)
+        public static double[] Gauss_unproj(double x, double y, double l0)
         {
             double pi = 3.141592653589793238463;
             double e = 0.00669438002290;
@@ -417,7 +416,7 @@ namespace celiang
             double L0 = l0;
             double l = n1 * y1 + n3 * Math.Pow(y1, 3) + n5 * Math.Pow(y1, 5);
             double L = L0 + l / pi * 180;
-            return [ L, B ];
+            return [L, B];
         }
 
         // 经纬度转UTM坐标
@@ -429,15 +428,15 @@ namespace celiang
         /// <returns></returns>
         public static double[] Utm_proj(double longitude, double latitude)
         {
-            double EQUATORIAL_RADIUS = 6378137.0;       
-            double FLATTENING = 1 / 298.257223563;      
-            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2); 
+            double EQUATORIAL_RADIUS = 6378137.0;
+            double FLATTENING = 1 / 298.257223563;
+            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2);
             double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED);
-            double SCALE_FACTOR = 0.9996;                
-            double FALSE_EASTING = 500000.0;            
-            double FALSE_NORTHING_S = 10000000.0;      
+            double SCALE_FACTOR = 0.9996;
+            double FALSE_EASTING = 500000.0;
+            double FALSE_NORTHING_S = 10000000.0;
             int zoneNumber = (int)Math.Floor((longitude + 180) / 6) + 1;
-            double centralMeridian = (zoneNumber - 1) * 6 - 180 + 3; 
+            double centralMeridian = (zoneNumber - 1) * 6 - 180 + 3;
             double latRad = (latitude) * Math.PI / 180.0;
             double lonRad = (longitude) * Math.PI / 180.0;
             double lonCenterRad = (centralMeridian) * Math.PI / 180.0;
@@ -445,11 +444,11 @@ namespace celiang
             double T = Math.Pow(Math.Tan(latRad), 2);
             double C = ECC_PRIME_SQUARED * Math.Pow(Math.Cos(latRad), 2);
             double A = (lonRad - lonCenterRad) * Math.Cos(latRad);
-            double M = EQUATORIAL_RADIUS * ((1 - ECC_SQUARED / 4 - 3 * Math.Pow(ECC_SQUARED, 2) / 64- 5 * Math.Pow(ECC_SQUARED, 3) / 256) * latRad - (3 * ECC_SQUARED / 8 + 3 * Math.Pow(ECC_SQUARED, 2) / 32+ 45 * Math.Pow(ECC_SQUARED, 3) / 1024) * Math.Sin(2 * latRad) + (15 * Math.Pow(ECC_SQUARED, 2) / 256 + 45 * Math.Pow(ECC_SQUARED, 3) / 1024)* Math.Sin(4 * latRad)- (35 * Math.Pow(ECC_SQUARED, 3) / 3072) * Math.Sin(6 * latRad));
-            double easting = SCALE_FACTOR * N * (A + (1 - T + C) * Math.Pow(A, 3) / 6+ (5 - 18 * T + Math.Pow(T, 2) + 72 * C - 58 * ECC_PRIME_SQUARED)* Math.Pow(A, 5) / 120) + FALSE_EASTING;
-            double northing = SCALE_FACTOR * (M + N * Math.Tan(latRad)* (Math.Pow(A, 2) / 2 + (5 - T + 9 * C + 4 * Math.Pow(C, 2))* Math.Pow(A, 4) / 24 + (61 - 58 * T + Math.Pow(T, 2) + 600 * C - 330 * ECC_PRIME_SQUARED) * Math.Pow(A, 6) / 720));
+            double M = EQUATORIAL_RADIUS * ((1 - ECC_SQUARED / 4 - 3 * Math.Pow(ECC_SQUARED, 2) / 64 - 5 * Math.Pow(ECC_SQUARED, 3) / 256) * latRad - (3 * ECC_SQUARED / 8 + 3 * Math.Pow(ECC_SQUARED, 2) / 32 + 45 * Math.Pow(ECC_SQUARED, 3) / 1024) * Math.Sin(2 * latRad) + (15 * Math.Pow(ECC_SQUARED, 2) / 256 + 45 * Math.Pow(ECC_SQUARED, 3) / 1024) * Math.Sin(4 * latRad) - (35 * Math.Pow(ECC_SQUARED, 3) / 3072) * Math.Sin(6 * latRad));
+            double easting = SCALE_FACTOR * N * (A + (1 - T + C) * Math.Pow(A, 3) / 6 + (5 - 18 * T + Math.Pow(T, 2) + 72 * C - 58 * ECC_PRIME_SQUARED) * Math.Pow(A, 5) / 120) + FALSE_EASTING;
+            double northing = SCALE_FACTOR * (M + N * Math.Tan(latRad) * (Math.Pow(A, 2) / 2 + (5 - T + 9 * C + 4 * Math.Pow(C, 2)) * Math.Pow(A, 4) / 24 + (61 - 58 * T + Math.Pow(T, 2) + 600 * C - 330 * ECC_PRIME_SQUARED) * Math.Pow(A, 6) / 720));
             if (latitude < 0) northing += FALSE_NORTHING_S;
-            return [northing, easting, zoneNumber ];
+            return [northing, easting, zoneNumber];
         }
 
         // UTM坐标转经纬度
@@ -463,13 +462,13 @@ namespace celiang
         /// <returns></returns>
         public static double[] Utm_unproj(double northing, double easting, int zoneNumber, bool isNorthern)
         {
-            double EQUATORIAL_RADIUS = 6378137.0;      
-            double FLATTENING = 1 / 298.257223563;      
-            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2); 
-            double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED); 
-            double SCALE_FACTOR = 0.9996;               
-            double FALSE_EASTING = 500000.0;                  
-            double FALSE_NORTHING_S = 10000000.0;        
+            double EQUATORIAL_RADIUS = 6378137.0;
+            double FLATTENING = 1 / 298.257223563;
+            double ECC_SQUARED = 2 * FLATTENING - Math.Pow(FLATTENING, 2);
+            double ECC_PRIME_SQUARED = ECC_SQUARED / (1 - ECC_SQUARED);
+            double SCALE_FACTOR = 0.9996;
+            double FALSE_EASTING = 500000.0;
+            double FALSE_NORTHING_S = 10000000.0;
             double x = easting - FALSE_EASTING;
             double y = isNorthern ? northing : northing - FALSE_NORTHING_S;
             double centralMeridian = (zoneNumber - 1) * 6 - 180 + 3;
@@ -493,19 +492,19 @@ namespace celiang
             double lonRad = lonCenterRad + (D - (1 + 2 * T1 + C1) * Math.Pow(D, 3) / 6
                 + (5 - 2 * C1 + 28 * T1 - 3 * Math.Pow(C1, 2) + 8 * ECC_PRIME_SQUARED + 24 * Math.Pow(T1, 2))
                 * Math.Pow(D, 5) / 120) / Math.Cos(phi1Rad);
-            return [(latRad) * 180 / Math.PI, (lonRad) * 180 / Math.PI ];
+            return [(latRad) * 180 / Math.PI, (lonRad) * 180 / Math.PI];
         }
-    
+
         //四参数
         // 应用转换公式
         //double convertedX = params.scale* (x* Math.cos(params.rotation) - y* Math.sin(params.rotation)) + params.deltaX;
         //        double convertedY = params.scale* (x* Math.sin(params.rotation) + y* Math.cos(params.rotation)) + params.deltaY;
         /// <summary>
-        /// 
+        /// 计算两组坐标系下的四参数转换参数
         /// </summary>
-        /// <param name="source"></param>
-        /// <param name="target"></param>
-        /// <returns></returns>
+        /// <param name="source">[x1,y1,x2,y2...]</param>
+        /// <param name="target">[x1,y1,x2,y2...]</param>
+        /// <returns>[deltaX, deltaY, rotation(弧度), scale]</returns>
         /// <exception cref="ArithmeticException"></exception>
         public static double[] Cs4(double[] source, double[] target)
         {
@@ -550,7 +549,7 @@ namespace celiang
                 double x2 = centeredTarget[2 * i];
                 double y2 = centeredTarget[2 * i + 1];
                 H11 += x1 * x1 + y1 * y1;
-                H12 += 0; 
+                H12 += 0;
                 H21 += 0;
                 H22 += x1 * x1 + y1 * y1;
                 B1 += x1 * x2 + y1 * y2;
@@ -559,7 +558,7 @@ namespace celiang
             double det = H11 * H22 - H12 * H21;
             if (Math.Abs(det) < 1e-15)
             {
-                throw new ArithmeticException("矩阵奇异，无法求解参数");
+                Console.WriteLine("矩阵奇异，无法求解参数");
             }
             double a = (H22 * B1 - H12 * B2) / det;
             double b = (-H21 * B1 + H11 * B2) / det;
@@ -567,8 +566,25 @@ namespace celiang
             double rotation = Math.Atan2(b, a);
             double deltaX = meanX2 - (a * meanX1 - b * meanY1);
             double deltaY = meanY2 - (b * meanX1 + a * meanY1);
-            Console.WriteLine($"四参数计算:\ndeltaX: {deltaX}\ndeltaY:{deltaY}\nrotation (radians): {rotation}\nscale: {scale}");
+             Console.WriteLine($"四参数计算:\ndeltaX: {deltaX}\ndeltaY:{deltaY}\nrotation (radians): {rotation}\nscale: {scale}");
             return [deltaX, deltaY, rotation, scale];
+        }
+        /// <summary>
+        /// 已知四参数进行坐标转换
+        /// </summary>
+        /// <param name="x">原坐标x</param>
+        /// <param name="y">原坐标y</param>
+        /// <param name="deltaX">平移x</param>
+        /// <param name="deltaY">平移y</param>
+        /// <param name="rotation">旋转弧度</param>
+        /// <param name="scale">缩放</param>
+        /// <returns>[x,y]</returns>
+        public static double[] FourParameterTransform(double x, double y, double deltaX, double deltaY, double rotation, double scale)
+        {
+            double convertedX = scale * (x * Math.Cos(rotation) - y * Math.Sin(rotation)) + deltaX;
+            double convertedY = scale * (x * Math.Sin(rotation) + y * Math.Cos(rotation)) + deltaY;
+            //Console.WriteLine($"转换后坐标:\nx: {convertedX}\ny: {convertedY}");
+            return [convertedX, convertedY];
         }
     }
 }
